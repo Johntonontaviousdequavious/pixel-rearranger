@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixel Rearranger - Transform Pixels Into Art</title>
+    <meta name="description" content="Rearrange the exact pixels of one image to form the shapes, shadows, and structures of another. Free, fast, and entirely client-side.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Plus+Jakarta+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="glass-bg"></div>
+    <div class="glow-effect" id="glow-1"></div>
+    <div class="glow-effect" id="glow-2"></div>
+
+    <header class="app-header">
+        <div class="logo-container">
+            <span class="logo-icon">✦</span>
+            <h1>Pixel <span class="gradient-text">Rearranger</span></h1>
+        </div>
+        <p class="tagline">Displace and morph the exact pixels of a source image to recreate a target image or portrait.</p>
+    </header>
+
+    <main class="app-main">
+        <section class="workspace-grid">
+            <!-- Left Panel: Source and Target Uploads -->
+            <div class="card panel-uploads">
+                <h2>1. Import Images</h2>
+                
+                <div class="upload-group">
+                    <label>Source Image (Provides Colors)</label>
+                    <div class="dropzone" id="source-dropzone">
+                        <input type="file" id="source-input" accept="image/*" class="file-input">
+                        <div class="dropzone-content">
+                            <span class="icon">🖼️</span>
+                            <p class="primary-text">Drag & drop source or click</p>
+                            <p class="secondary-text">Colorful images work best</p>
+                        </div>
+                        <img id="source-preview" alt="Source Preview" class="preview-img hidden">
+                    </div>
+                </div>
+
+                <div class="upload-group">
+                    <label>Target Image (Provides Shape & Shading)</label>
+                    <div class="dropzone" id="target-dropzone">
+                        <input type="file" id="target-input" accept="image/*" class="file-input">
+                        <div class="dropzone-content">
+                            <span class="icon">👤</span>
+                            <p class="primary-text">Drag & drop target or click</p>
+                            <p class="secondary-text">Portraits or high-contrast shapes</p>
+                        </div>
+                        <img id="target-preview" alt="Target Preview" class="preview-img hidden">
+                    </div>
+                </div>
+
+                <div class="presets-section">
+                    <label>Or Use Target Preset:</label>
+                    <div class="preset-buttons">
+                        <button type="button" class="btn-preset active" data-preset="lincoln">Lincoln Silhouette</button>
+                        <button type="button" class="btn-preset" data-preset="monalisa">Mona Lisa Contour</button>
+                        <button type="button" class="btn-preset" data-preset="geometric">Geometric Vortex</button>
+                        <button type="button" class="btn-preset" data-preset="star">Vibrant Star</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Center Panel: Live Workspace & Canvas -->
+            <div class="card panel-canvas">
+                <div class="canvas-header">
+                    <h2>2. Canvas Workspace</h2>
+                    <div class="status-badge" id="status-text">Ready</div>
+                </div>
+                
+                <div class="canvas-container">
+                    <canvas id="output-canvas"></canvas>
+                    <div class="canvas-placeholder" id="canvas-placeholder">
+                        <p>Upload a source image and select a target to begin rearrangement</p>
+                    </div>
+                </div>
+
+                <div class="playback-controls">
+                    <button class="btn btn-primary" id="btn-process" disabled>Rearrange Pixels</button>
+                    <button class="btn btn-secondary" id="btn-animate" disabled>Animate Transition</button>
+                    <button class="btn btn-outline" id="btn-download" disabled>Download Image</button>
+                </div>
+            </div>
+
+            <!-- Right Panel: Controls & Options -->
+            <div class="card panel-controls">
+                <h2>3. Configuration</h2>
+                
+                <div class="control-group">
+                    <div class="label-with-val">
+                        <label for="range-resolution">Resolution (Grid Size)</label>
+                        <span id="val-resolution">150 × 150</span>
+                    </div>
+                    <input type="range" id="range-resolution" min="50" max="250" step="10" value="150">
+                    <p class="control-hint">Higher values look sharper but run slower.</p>
+                </div>
+
+                <div class="control-group">
+                    <label for="select-metric">Sorting Metric (Color Value)</label>
+                    <select id="select-metric">
+                        <option value="luminance" selected>Luminance (Brightness)</option>
+                        <option value="hue">Hue (Color Tone)</option>
+                        <option value="saturation">Saturation (Purity)</option>
+                        <option value="red">Red Channel</option>
+                        <option value="green">Green Channel</option>
+                        <option value="blue">Blue Channel</option>
+                        <option value="rgbsum">RGB Sum</option>
+                    </select>
+                    <p class="control-hint">Determines how pixels are matched from source to target.</p>
+                </div>
+
+                <div class="control-group">
+                    <div class="label-with-val">
+                        <label for="range-speed">Animation Speed</label>
+                        <span id="val-speed">Normal</span>
+                    </div>
+                    <input type="range" id="range-speed" min="1" max="100" value="50">
+                </div>
+
+                <div class="info-card">
+                    <h3>How it works</h3>
+                    <p>Every single pixel from your source image is extracted, sorted by the selected metric, and mapped directly to the corresponding sorted pixel position of the target template. No new colors are created; your original image is simply dismantled and reassembled!</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="app-footer">
+        <p>&copy; 2026 Pixel Rearranger. Built with pure client-side technology.</p>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
