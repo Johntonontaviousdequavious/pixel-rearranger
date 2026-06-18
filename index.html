@@ -70,13 +70,20 @@
             <div class="card panel-canvas">
                 <div class="canvas-header">
                     <h2>2. Canvas Workspace</h2>
+                    <div class="view-mode-toggle">
+                        <button class="btn-mode active" id="btn-mode-2d">2D View</button>
+                        <button class="btn-mode" id="btn-mode-3d">3D View</button>
+                    </div>
                     <div class="status-badge" id="status-text">Ready</div>
                 </div>
                 
                 <div class="canvas-container">
                     <canvas id="output-canvas"></canvas>
                     <div class="canvas-placeholder" id="canvas-placeholder">
-                        <p>Upload a source image and select a target to begin rearrangement</p>
+                        <p>Upload a source image to begin 3D visualization or pixel rearrangement</p>
+                    </div>
+                    <div class="drag-hint hidden" id="drag-hint">
+                        <span>🖱️ Drag to rotate 3D model</span>
                     </div>
                 </div>
 
@@ -84,6 +91,7 @@
                     <button class="btn btn-primary" id="btn-process" disabled>Rearrange Pixels</button>
                     <button class="btn btn-secondary" id="btn-animate" disabled>Animate Transition</button>
                     <button class="btn btn-outline" id="btn-download" disabled>Download Image</button>
+                    <button class="btn btn-outline" id="btn-export-3d" disabled>Export 3D (.obj)</button>
                 </div>
             </div>
 
@@ -112,6 +120,15 @@
                         <option value="rgbsum">RGB Sum</option>
                     </select>
                     <p class="control-hint">Determines how pixels are matched from source to target.</p>
+                </div>
+
+                <div class="control-group">
+                    <div class="label-with-val">
+                        <label for="range-depth">3D Depth Scale</label>
+                        <span id="val-depth">1.0</span>
+                    </div>
+                    <input type="range" id="range-depth" min="0.1" max="5.0" step="0.1" value="1.0">
+                    <p class="control-hint">Sets extrusion along the Z-axis based on pixel brightness.</p>
                 </div>
 
                 <div class="control-group">

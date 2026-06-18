@@ -375,7 +375,55 @@ body {
 /* Playback buttons */
 .playback-controls {
     display: flex;
+    flex-wrap: wrap;
     gap: 0.75rem;
+}
+
+/* Mode Toggle Button Group */
+.view-mode-toggle {
+    display: flex;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--card-border);
+    border-radius: 20px;
+    padding: 2px;
+}
+
+.btn-mode {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    padding: 0.4rem 1rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border-radius: 18px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: var(--transition);
+}
+
+.btn-mode:hover {
+    color: var(--text-primary);
+}
+
+.btn-mode.active {
+    background: var(--primary);
+    color: white;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+}
+
+/* 3D Drag Hint */
+.drag-hint {
+    position: absolute;
+    bottom: 15px;
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-secondary);
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    pointer-events: none;
+    backdrop-filter: blur(10px);
+    transition: var(--transition);
 }
 
 .btn {
