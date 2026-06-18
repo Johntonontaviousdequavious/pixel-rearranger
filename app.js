@@ -405,15 +405,9 @@ function runMorphAnimation() {
     statusBadge.textContent = 'Morphing...';
     statusBadge.className = 'status-badge working';
 
-    // Reset particle progress and shuffle starting offsets slightly for organic feel
-    for (let i = 0; i < particles.length; i++) {
-        particles[i].x = particles[i].startX;
-        particles[i].y = particles[i].startY;
-        particles[i].t = 0;
-    }
-
     const size = parseInt(resolutionRange.value);
     const speed = parseFloat(speedRange.value) / 1500; // Normalised speed step
+    let t = 0;
 
     function animate() {
         // Clear canvas
@@ -421,26 +415,20 @@ function runMorphAnimation() {
         ctx.fillRect(0, 0, size, size);
 
         const imgData = ctx.createImageData(size, size);
-        let done = true;
+        
+        t = Math.min(1, t + speed);
+        const ease = easeInOutCubic(t);
 
         for (let i = 0; i < particles.length; i++) {
             const p = particles[i];
             
-            if (p.t < 1) {
-                p.t = Math.min(1, p.t + speed);
-                // Smooth easing curve
-                const ease = easeInOutCubic(p.t);
-                p.x = p.startX + (p.endX - p.startX) * ease;
-                p.y = p.startY + (p.endY - p.startY) * ease;
-                done = false;
-            } else {
-                p.x = p.endX;
-                p.y = p.endY;
-            }
+            // Interpolate position based on precalculated easing factor
+            const x = p.startX + (p.endX - p.startX) * ease;
+            const y = p.startY + (p.endY - p.startY) * ease;
 
             // Draw to pixel grid buffer (round to nearest pixel)
-            const px = Math.round(p.x);
-            const py = Math.round(p.y);
+            const px = Math.round(x);
+            const py = Math.round(y);
 
             if (px >= 0 && px < size && py >= 0 && py < size) {
                 const idx = (py * size + px) * 4;
@@ -453,7 +441,7 @@ function runMorphAnimation() {
 
         ctx.putImageData(imgData, 0, 0);
 
-        if (!done && isAnimating) {
+        if (t < 1 && isAnimating) {
             animationFrameId = requestAnimationFrame(animate);
         } else {
             isAnimating = false;
@@ -468,6 +456,7 @@ function runMorphAnimation() {
 function easeInOutCubic(x) {
     return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
 }
+
 
 // Download Canvas Output
 function downloadCanvas() {
