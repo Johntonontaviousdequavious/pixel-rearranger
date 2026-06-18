@@ -109,6 +109,15 @@
                 </div>
 
                 <div class="control-group">
+                    <div class="label-with-val">
+                        <label for="range-block-size">Pixel Size (Mosaic Block)</label>
+                        <span id="val-block-size">1 px</span>
+                    </div>
+                    <input type="range" id="range-block-size" min="1" max="10" step="1" value="1">
+                    <p class="control-hint">Larger values create a pixel-art/mosaic effect by using fewer source pixels.</p>
+                </div>
+
+                <div class="control-group">
                     <label for="select-metric">Sorting Metric (Color Value)</label>
                     <select id="select-metric">
                         <option value="luminance" selected>Luminance (Brightness)</option>

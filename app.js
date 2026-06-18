@@ -25,6 +25,8 @@ const dragHint = document.getElementById('drag-hint');
 const btnExport3D = document.getElementById('btn-export-3d');
 const depthRange = document.getElementById('range-depth');
 const depthVal = document.getElementById('val-depth');
+const blockSizeRange = document.getElementById('range-block-size');
+const blockSizeVal = document.getElementById('val-block-size');
 
 // Context and States
 const ctx = outputCanvas.getContext('2d');
@@ -34,6 +36,7 @@ let currentPreset = 'lincoln';
 let particles = [];
 let animationFrameId = null;
 let isAnimating = false;
+let blockSize = 1;
 
 // 3D States
 let viewMode = '2d'; // '2d' or '3d'
@@ -48,6 +51,11 @@ let active3DPixels = []; // Store current set of 3D pixels (source or rearranged
 // Setup Resolution Label
 resolutionRange.addEventListener('input', () => {
     resolutionVal.textContent = `${resolutionRange.value} × ${resolutionRange.value}`;
+});
+
+// Setup Block Size Label
+blockSizeRange.addEventListener('input', () => {
+    blockSizeVal.textContent = `${blockSizeRange.value} px`;
 });
 
 // Setup Speed Label
@@ -327,39 +335,44 @@ function processPixels() {
     isAnimating = false;
 
     const size = parseInt(resolutionRange.value);
+    blockSize = parseInt(blockSizeRange.value);
+
+    // Compute effective resolution based on block size downsampling
+    const effectiveSize = Math.floor(size / blockSize);
+
     outputCanvas.width = size;
     outputCanvas.height = size;
 
-    // 1. Draw source image onto temp offscreen canvas to extract pixels
+    // 1. Draw source image onto temp offscreen canvas (at effectiveSize)
     const srcCanvas = document.createElement('canvas');
-    srcCanvas.width = size;
-    srcCanvas.height = size;
+    srcCanvas.width = effectiveSize;
+    srcCanvas.height = effectiveSize;
     const srcCtx = srcCanvas.getContext('2d');
-    srcCtx.drawImage(sourceImg, 0, 0, size, size);
-    const srcData = srcCtx.getImageData(0, 0, size, size).data;
+    srcCtx.drawImage(sourceImg, 0, 0, effectiveSize, effectiveSize);
+    const srcData = srcCtx.getImageData(0, 0, effectiveSize, effectiveSize).data;
 
-    // 2. Draw target image or preset onto target offscreen canvas
+    // 2. Draw target image or preset onto target offscreen canvas (at effectiveSize)
     const tgtCanvas = document.createElement('canvas');
-    tgtCanvas.width = size;
-    tgtCanvas.height = size;
+    tgtCanvas.width = effectiveSize;
+    tgtCanvas.height = effectiveSize;
     const tgtCtx = tgtCanvas.getContext('2d');
 
     if (targetImg) {
-        tgtCtx.drawImage(targetImg, 0, 0, size, size);
+        tgtCtx.drawImage(targetImg, 0, 0, effectiveSize, effectiveSize);
     } else {
-        const presetCanvas = generatePresetCanvas(currentPreset, size);
-        tgtCtx.drawImage(presetCanvas, 0, 0, size, size);
+        const presetCanvas = generatePresetCanvas(currentPreset, effectiveSize);
+        tgtCtx.drawImage(presetCanvas, 0, 0, effectiveSize, effectiveSize);
     }
-    const tgtData = tgtCtx.getImageData(0, 0, size, size).data;
+    const tgtData = tgtCtx.getImageData(0, 0, effectiveSize, effectiveSize).data;
 
     // 3. Collect source & target pixel arrays
     const srcPixels = [];
     const tgtPixels = [];
     const metric = metricSelect.value;
 
-    for (let y = 0; y < size; y++) {
-        for (let x = 0; x < size; x++) {
-            const idx = (y * size + x) * 4;
+    for (let y = 0; y < effectiveSize; y++) {
+        for (let x = 0; x < effectiveSize; x++) {
+            const idx = (y * effectiveSize + x) * 4;
             const sr = srcData[idx];
             const sg = srcData[idx + 1];
             const sb = srcData[idx + 2];
@@ -373,13 +386,13 @@ function processPixels() {
             srcPixels.push({
                 r: sr, g: sg, b: sb, a: sa,
                 key: getPixelMetric(sr, sg, sb, metric),
-                origX: x, origY: y
+                origX: x * blockSize, origY: y * blockSize
             });
 
             tgtPixels.push({
                 r: tr, g: tg, b: tb, a: ta,
                 key: getPixelMetric(tr, tg, tb, metric),
-                targetX: x, targetY: y
+                targetX: x * blockSize, targetY: y * blockSize
             });
         }
     }
@@ -421,14 +434,22 @@ function drawImmediate() {
     const size = parseInt(resolutionRange.value);
     const imgData = ctx.createImageData(size, size);
     
-    // Draw each particle at its end target coordinate
+    // Draw each particle at its end target coordinate (drawn as a block of size blockSize)
     for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
-        const idx = (p.endY * size + p.endX) * 4;
-        imgData.data[idx] = p.r;
-        imgData.data[idx + 1] = p.g;
-        imgData.data[idx + 2] = p.b;
-        imgData.data[idx + 3] = p.a;
+        for (let dy = 0; dy < blockSize; dy++) {
+            for (let dx = 0; dx < blockSize; dx++) {
+                const px = p.endX + dx;
+                const py = p.endY + dy;
+                if (px >= 0 && px < size && py >= 0 && py < size) {
+                    const idx = (py * size + px) * 4;
+                    imgData.data[idx] = p.r;
+                    imgData.data[idx + 1] = p.g;
+                    imgData.data[idx + 2] = p.b;
+                    imgData.data[idx + 3] = p.a;
+                }
+            }
+        }
     }
     
     ctx.putImageData(imgData, 0, 0);
@@ -467,16 +488,23 @@ function runMorphAnimation() {
             const x = p.startX + (p.endX - p.startX) * ease;
             const y = p.startY + (p.endY - p.startY) * ease;
 
-            // Draw to pixel grid buffer (round to nearest pixel)
-            const px = Math.round(x);
-            const py = Math.round(y);
+            // Draw to pixel grid buffer (round to nearest pixel start)
+            const startPx = Math.round(x);
+            const startPy = Math.round(y);
 
-            if (px >= 0 && px < size && py >= 0 && py < size) {
-                const idx = (py * size + px) * 4;
-                imgData.data[idx] = p.r;
-                imgData.data[idx + 1] = p.g;
-                imgData.data[idx + 2] = p.b;
-                imgData.data[idx + 3] = p.a;
+            for (let dy = 0; dy < blockSize; dy++) {
+                for (let dx = 0; dx < blockSize; dx++) {
+                    const px = startPx + dx;
+                    const py = startPy + dy;
+
+                    if (px >= 0 && px < size && py >= 0 && py < size) {
+                        const idx = (py * size + px) * 4;
+                        imgData.data[idx] = p.r;
+                        imgData.data[idx + 1] = p.g;
+                        imgData.data[idx + 2] = p.b;
+                        imgData.data[idx + 3] = p.a;
+                    }
+                }
             }
         }
 
@@ -504,17 +532,20 @@ function easeInOutCubic(x) {
 function build3DPixelsFromSource() {
     if (!sourceImg) return;
     const size = parseInt(resolutionRange.value);
+    blockSize = parseInt(blockSizeRange.value);
+    const effectiveSize = Math.floor(size / blockSize);
+    
     const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = size;
-    tempCanvas.height = size;
+    tempCanvas.width = effectiveSize;
+    tempCanvas.height = effectiveSize;
     const tempCtx = tempCanvas.getContext('2d');
-    tempCtx.drawImage(sourceImg, 0, 0, size, size);
-    const data = tempCtx.getImageData(0, 0, size, size).data;
+    tempCtx.drawImage(sourceImg, 0, 0, effectiveSize, effectiveSize);
+    const data = tempCtx.getImageData(0, 0, effectiveSize, effectiveSize).data;
     
     active3DPixels = [];
-    for (let y = 0; y < size; y++) {
-        for (let x = 0; x < size; x++) {
-            const idx = (y * size + x) * 4;
+    for (let y = 0; y < effectiveSize; y++) {
+        for (let x = 0; x < effectiveSize; x++) {
+            const idx = (y * effectiveSize + x) * 4;
             const r = data[idx];
             const g = data[idx+1];
             const b = data[idx+2];
@@ -523,8 +554,8 @@ function build3DPixelsFromSource() {
             
             active3DPixels.push({
                 r, g, b, a,
-                x: x - size / 2,
-                y: y - size / 2,
+                x: (x * blockSize) - size / 2,
+                y: (y * blockSize) - size / 2,
                 z: (lum / 255) * size * 0.4 // Depth map
             });
         }
@@ -604,15 +635,22 @@ function render3D() {
 
     for (let i = 0; i < projected.length; i++) {
         const p = projected[i];
-        const px = Math.round(p.projX);
-        const py = Math.round(p.projY);
+        const startPx = Math.round(p.projX);
+        const startPy = Math.round(p.projY);
 
-        if (px >= 0 && px < size && py >= 0 && py < size) {
-            const idx = (py * size + px) * 4;
-            imgData.data[idx] = p.r;
-            imgData.data[idx + 1] = p.g;
-            imgData.data[idx + 2] = p.b;
-            imgData.data[idx + 3] = p.a;
+        for (let dy = 0; dy < blockSize; dy++) {
+            for (let dx = 0; dx < blockSize; dx++) {
+                const px = startPx + dx;
+                const py = startPy + dy;
+
+                if (px >= 0 && px < size && py >= 0 && py < size) {
+                    const idx = (py * size + px) * 4;
+                    imgData.data[idx] = p.r;
+                    imgData.data[idx + 1] = p.g;
+                    imgData.data[idx + 2] = p.b;
+                    imgData.data[idx + 3] = p.a;
+                }
+            }
         }
     }
 
@@ -681,6 +719,23 @@ resolutionRange.addEventListener('change', () => {
             render3D();
         } else if (particles.length === 0) {
             draw2DSource();
+        }
+    }
+});
+
+// Block Size update rebuild
+blockSizeRange.addEventListener('change', () => {
+    if (sourceImg) {
+        build3DPixelsFromSource();
+        if (particles.length > 0) {
+            // Re-run matching at the new block resolution
+            processPixels();
+        } else {
+            if (viewMode === '3d') {
+                render3D();
+            } else {
+                draw2DSource();
+            }
         }
     }
 });

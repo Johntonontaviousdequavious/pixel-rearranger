@@ -5,7 +5,8 @@ A premium single-page web application built with pure HTML, CSS, and vanilla JS.
 ## Features
 
 * **Pixel Rearrangement (2D Mode)**:
-  * Sorts and reassembles every single pixel from your source image to recreate a target image (custom uploads or preset silhouettes).
+  * Sorts and reassembles pixels from your source image to recreate a target image (custom uploads or preset silhouettes).
+  * **Pixel Size Slider (Mosaic Mode)**: Choose the size of rendered pixels (1px to 10px). Larger values group pixels into mosaic blocks, downsampling the source image to use fewer pixels and create custom pixel-art effects.
   * Smooth particle morph transitions animate pixels floating from their starting source positions to target layout coordinates.
   * Sorting metrics: Luminance, Hue, Saturation, Red, Green, Blue, or RGB Sum.
 
