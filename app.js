@@ -17,6 +17,7 @@ const resolutionVal = document.getElementById('val-resolution');
 const metricSelect = document.getElementById('select-metric');
 const speedRange = document.getElementById('range-speed');
 const speedVal = document.getElementById('val-speed');
+const btnSwapImages = document.getElementById('btn-swap-images');
 
 // 3D Control Elements
 const btnMode2D = document.getElementById('btn-mode-2d');
@@ -167,6 +168,14 @@ function checkReadyState() {
             draw2DSource();
         }
     }
+    
+    // Enable swap if both custom source and target are uploaded
+    if (sourceImg && targetImg) {
+        btnSwapImages.disabled = false;
+    } else {
+        btnSwapImages.disabled = true;
+    }
+
     if (sourceImg && (targetImg || currentPreset)) {
         btnProcess.disabled = false;
     } else {
@@ -816,4 +825,33 @@ btnProcess.addEventListener('click', processPixels);
 btnAnimate.addEventListener('click', runMorphAnimation);
 btnDownload.addEventListener('click', downloadCanvas);
 btnExport3D.addEventListener('click', exportToOBJ);
+
+// Swap Source and Target Images
+btnSwapImages.addEventListener('click', () => {
+    if (!sourceImg || !targetImg) return;
+    
+    // Swap image objects
+    const tempImg = sourceImg;
+    sourceImg = targetImg;
+    targetImg = tempImg;
+
+    // Swap preview sources
+    const tempSrc = sourcePreview.src;
+    sourcePreview.src = targetPreview.src;
+    targetPreview.src = tempSrc;
+
+    // Reset particles because grid has changed
+    particles = [];
+    btnAnimate.disabled = true;
+    
+    // Reset status badge
+    statusBadge.textContent = 'Ready';
+    statusBadge.className = 'status-badge';
+
+    // Rebuild 3D points for the new source
+    build3DPixelsFromSource();
+
+    // Re-verify UI ready states
+    checkReadyState();
+});
 

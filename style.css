@@ -260,6 +260,41 @@ body {
     display: none !important;
 }
 
+/* Swap Images Action */
+.swap-action-container {
+    display: flex;
+    justify-content: center;
+    margin: -0.25rem 0;
+}
+
+.btn-swap {
+    background: rgba(99, 102, 241, 0.08);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    color: var(--primary);
+    padding: 0.4rem 1rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    border-radius: 20px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: var(--transition);
+}
+
+.btn-swap:hover:not(:disabled) {
+    background: rgba(99, 102, 241, 0.15);
+    border-color: var(--primary);
+    color: var(--text-primary);
+    box-shadow: 0 0 10px rgba(99, 102, 241, 0.1);
+}
+
+.btn-swap:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    border-color: var(--card-border);
+    color: var(--text-muted);
+    background: transparent;
+}
+
 /* Preset Buttons */
 .presets-section {
     display: flex;
